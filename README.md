@@ -1,1 +1,1 @@
-# gin-contrib
+# otel-contrib
