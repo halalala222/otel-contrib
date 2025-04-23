@@ -5,6 +5,8 @@ import (
 	"go.opentelemetry.io/otel/metric/embedded"
 )
 
+var globalMetricCallbacks = make([]metric.Callback, 0)
+
 var _ metric.MeterProvider = (*Provider)(nil)
 var _ metric.Meter = (*Meter)(nil)
 var _ metric.Registration = (*Registration)(nil)
@@ -46,6 +48,10 @@ func (t *Provider) GetMeterFloat64RecordData(name string) any {
 
 func (t *Provider) GetMeterFloat64AddData(name string) any {
 	return t.GetMeterData(name, Float64AddType)
+}
+
+func (t *Provider) GetGlobalMeterCallbacks() []metric.Callback {
+	return globalMetricCallbacks
 }
 
 type Meter struct {
@@ -109,6 +115,7 @@ func (t *Meter) Float64ObservableGauge(name string, options ...metric.Float64Obs
 }
 
 func (t *Meter) RegisterCallback(f metric.Callback, instruments ...metric.Observable) (metric.Registration, error) {
+	globalMetricCallbacks = append(globalMetricCallbacks, f)
 	return &Registration{}, nil
 }
 

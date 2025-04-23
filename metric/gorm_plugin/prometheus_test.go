@@ -1,6 +1,7 @@
 package gorm_plugin
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -24,6 +25,8 @@ const (
 	testMaxIdleTimeClosed
 )
 
+const observerName = "gorm-db-status"
+
 func TestPrometheus_Initialize(t *testing.T) {
 	testProvider := &test.Provider{}
 	otel.SetMeterProvider(testProvider)
@@ -42,29 +45,34 @@ func TestPrometheus_Initialize(t *testing.T) {
 		Mock((*gorm.DB).DB).Return(new(sql.DB), nil).Build()
 
 		p := New()
+		err := p.Initialize(new(gorm.DB))
+		assert.Equal(t, err, nil)
 
-		if err := p.Initialize(new(gorm.DB)); err != nil {
-			t.Error(err)
-		}
+		tetsCallbacks := testProvider.GetGlobalMeterCallbacks()
+		assert.Equal(t, len(tetsCallbacks), 1)
+
+		testObserver := &test.Observer{}
+		err = tetsCallbacks[0](context.Background(), testObserver)
+		assert.Equal(t, err, nil)
 	})
 
-	maxOpenConnections := testProvider.GetMeterFloat64RecordData("gorm-db-status-max-open-connections")
-	openConnections := testProvider.GetMeterFloat64RecordData("gorm-db-status-open-connections")
-	inUse := testProvider.GetMeterFloat64RecordData("gorm-db-status-in-use")
-	idle := testProvider.GetMeterFloat64RecordData("gorm-db-status-idle")
-	waitCount := testProvider.GetMeterFloat64RecordData("gorm-db-status-wait-count")
-	waitDuration := testProvider.GetMeterFloat64RecordData("gorm-db-status-wait-duration")
-	maxIdleClosed := testProvider.GetMeterFloat64RecordData("gorm-db-status-max-idle-closed")
-	maxLifetimeClosed := testProvider.GetMeterFloat64RecordData("gorm-db-status-max-lifetime-closed")
-	maxIdleTimeClosed := testProvider.GetMeterFloat64RecordData("gorm-db-status-max-idle-time-closed")
+	maxOpenConnections := testProvider.GetMeterInt64RecordData(maxOpenConnsName)
+	openConnections := testProvider.GetMeterInt64RecordData(openConnsName)
+	inUse := testProvider.GetMeterInt64RecordData(inUseConnsName)
+	idle := testProvider.GetMeterInt64RecordData(idleConnsName)
+	waitCount := testProvider.GetMeterInt64RecordData(connsWaitCountName)
+	waitDuration := testProvider.GetMeterInt64RecordData(connsWaitDurationName)
+	maxIdleClosed := testProvider.GetMeterInt64RecordData(connsClosedMaxIdleName)
+	maxLifetimeClosed := testProvider.GetMeterInt64RecordData(connsClosedMaxLifetimeName)
+	maxIdleTimeClosed := testProvider.GetMeterInt64RecordData(connsClosedMaxIdleTimeName)
 
-	assert.Equal(t, maxOpenConnections, float64(testMaxOpenConnections))
-	assert.Equal(t, openConnections, float64(testOpenConnections))
-	assert.Equal(t, inUse, float64(testInUse))
-	assert.Equal(t, idle, float64(testIdle))
-	assert.Equal(t, waitCount, float64(testWaitCount))
-	assert.Equal(t, waitDuration, float64(testWaitDuration))
-	assert.Equal(t, maxIdleClosed, float64(testMaxIdleClosed))
-	assert.Equal(t, maxLifetimeClosed, float64(testMaxLifetimeClosed))
-	assert.Equal(t, maxIdleTimeClosed, float64(testMaxIdleTimeClosed))
+	assert.Equal(t, maxOpenConnections, int64(testMaxOpenConnections))
+	assert.Equal(t, openConnections, int64(testOpenConnections))
+	assert.Equal(t, inUse, int64(testInUse))
+	assert.Equal(t, idle, int64(testIdle))
+	assert.Equal(t, waitCount, int64(testWaitCount))
+	assert.Equal(t, waitDuration, int64(testWaitDuration))
+	assert.Equal(t, maxIdleClosed, int64(testMaxIdleClosed))
+	assert.Equal(t, maxLifetimeClosed, int64(testMaxLifetimeClosed))
+	assert.Equal(t, maxIdleTimeClosed, int64(testMaxIdleTimeClosed))
 }

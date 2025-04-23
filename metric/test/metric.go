@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	Int64RecordType   = "int64_record"
-	Int64AddType      = "int64_add"
+	Int64RecordType = "int64_record"
+	Int64AddType    = "int64_add"
+
 	Float64RecordType = "float64_record"
 	Float64AddType    = "float64_add"
 )
@@ -36,6 +37,8 @@ var _ metric.Float64Gauge = (*Float64MetricData)(nil)
 var _ metric.Float64ObservableCounter = (*Float64MetricData)(nil)
 var _ metric.Float64ObservableUpDownCounter = (*Float64MetricData)(nil)
 var _ metric.Float64ObservableGauge = (*Float64MetricData)(nil)
+
+var _ metric.Observer = (*Observer)(nil)
 
 // Int64MetricData is a test implementation of the Int64 type of metric.
 type Int64MetricData struct {
@@ -86,14 +89,43 @@ type Float64MetricData struct {
 	embedded.Float64ObservableUpDownCounter
 	embedded.Float64ObservableGauge
 
-	name        string
-	writeMetric *writeMetric
+	name string
 }
 
-func (t Float64MetricData) Record(ctx context.Context, incr float64, options ...metric.RecordOption) {
+func (t *Float64MetricData) Record(ctx context.Context, incr float64, options ...metric.RecordOption) {
 	writeMetricValue.Write(t.name, Float64RecordType, incr)
 }
 
-func (t Float64MetricData) Add(ctx context.Context, incr float64, options ...metric.AddOption) {
+func (t *Float64MetricData) Add(ctx context.Context, incr float64, options ...metric.AddOption) {
 	writeMetricValue.Write(t.name, Float64AddType, incr)
+}
+
+type Observer struct {
+	embedded.Observer
+}
+
+func (o *Observer) ObserveInt64(obsrv metric.Int64Observable, value int64, opts ...metric.ObserveOption) {
+	if obsrv == nil {
+		return
+	}
+
+	if _, ok := obsrv.(*Int64MetricData); !ok {
+		return
+	}
+
+	int64MetricData := obsrv.(*Int64MetricData)
+	int64MetricData.Record(context.Background(), value)
+}
+
+func (o *Observer) ObserveFloat64(obsrv metric.Float64Observable, value float64, opts ...metric.ObserveOption) {
+	if obsrv == nil {
+		return
+	}
+
+	if _, ok := obsrv.(Float64MetricData); !ok {
+		return
+	}
+
+	float64MetricData := obsrv.(Float64MetricData)
+	float64MetricData.Record(context.Background(), value)
 }
