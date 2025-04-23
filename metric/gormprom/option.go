@@ -2,26 +2,14 @@ package gormprom
 
 import "go.opentelemetry.io/otel/metric"
 
+const defaultInstrumentName = "ncuhome:gorm"
+
 type prometheusConfig struct {
-	dbName          string
 	instrumName     string
-	interval        int
 	observerOptions []metric.ObserveOption
 }
 
 type Option func(*prometheusConfig)
-
-func WithDBName(dbName string) Option {
-	return func(c *prometheusConfig) {
-		c.dbName = dbName
-	}
-}
-
-func WithInterval(interval int) Option {
-	return func(c *prometheusConfig) {
-		c.interval = interval
-	}
-}
 
 func WithInstrumentationName(name string) Option {
 	return func(c *prometheusConfig) {
@@ -37,8 +25,7 @@ func WithObserverOptions(opts ...metric.ObserveOption) Option {
 
 func defaultConfig() *prometheusConfig {
 	return &prometheusConfig{
-		dbName:   "default",
-		interval: 10,
+		instrumName: defaultInstrumentName,
 	}
 }
 
