@@ -25,8 +25,6 @@ const (
 	testMaxIdleTimeClosed
 )
 
-const observerName = "gorm-db-status"
-
 func TestPrometheus_Initialize(t *testing.T) {
 	testProvider := &test.Provider{}
 	otel.SetMeterProvider(testProvider)
