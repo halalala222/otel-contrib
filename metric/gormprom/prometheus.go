@@ -1,4 +1,4 @@
-package gorm_plugin
+package gormprom
 
 import (
 	"context"
