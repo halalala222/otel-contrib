@@ -1,9 +1,12 @@
 package gorm_plugin
 
+import "go.opentelemetry.io/otel/metric"
+
 type prometheusConfig struct {
-	dbName        string
-	interval      int
-	variableNames []string
+	dbName          string
+	instrumName     string
+	interval        int
+	observerOptions []metric.ObserveOption
 }
 
 type Option func(*prometheusConfig)
@@ -17,6 +20,18 @@ func WithDBName(dbName string) Option {
 func WithInterval(interval int) Option {
 	return func(c *prometheusConfig) {
 		c.interval = interval
+	}
+}
+
+func WithInstrumentationName(name string) Option {
+	return func(c *prometheusConfig) {
+		c.instrumName = name
+	}
+}
+
+func WithObserverOptions(opts ...metric.ObserveOption) Option {
+	return func(c *prometheusConfig) {
+		c.observerOptions = opts
 	}
 }
 
