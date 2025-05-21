@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Int64RecordType = "int64_record"
+	Int64RecordType = "int64_record_main_change"
 	Int64AddType    = "int64_add"
 
 	Float64RecordType = "float64_record"
